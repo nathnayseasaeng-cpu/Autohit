@@ -1,0 +1,53 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Define the RemoteEvent name and wait for it to load
+local MELEE_EVENT_NAME = "meleeEvent"
+local event = ReplicatedStorage:WaitForChild(MELEE_EVENT_NAME)
+
+-- Local player references
+local LocalPlayer = Players.LocalPlayer
+local localCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+-- Set the frequency for checking other players (e.g., 5 times per second)
+local CHECK_FREQUENCY = 0.2 -- Original frequency (Adjust to 0.5 for less server load)
+
+-- Define the maximum distance for the client to consider a target "hittable"
+local MAX_ATTACK_RANGE = 8 
+
+-- Wait for the LocalPlayer's character to be fully ready before starting the loop
+if not localCharacter then
+    localCharacter = LocalPlayer.CharacterAdded:Wait()
+end
+
+while task.wait(CHECK_FREQUENCY) do
+    
+    -- Get the position of the local player's character
+    local localHumanoidRootPart = localCharacter:FindFirstChild("HumanoidRootPart")
+    if not localHumanoidRootPart then continue end -- Skip if character is missing HRP
+
+    -- Iterate through all players in the game
+    for _, targetPlayer in Players:GetPlayers() do
+        
+        -- 1. Ensure the player is not the LocalPlayer
+        if targetPlayer ~= LocalPlayer then
+            
+            local targetCharacter = targetPlayer.Character
+            
+            -- 2. Validate that the target player has a valid Character and HumanoidRootPart
+            local targetHumanoidRootPart = targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart")
+            if not targetHumanoidRootPart then
+                continue -- Skip if target character/HRP is missing
+            end
+            
+            -- 3. Perform a quick distance check on the client-side
+            local distance = (localHumanoidRootPart.Position - targetHumanoidRootPart.Position).Magnitude
+            
+            if distance <= MAX_ATTACK_RANGE then
+                -- 4. Only fire the event if the target is within the specified range
+                -- Send the target Player Instance to the server
+                event:FireServer(targetPlayer)
+            end
+        end
+    end
+end
