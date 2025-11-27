@@ -1,2 +1,51 @@
 # Autohit
 -
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- ตรวจสอบว่า RemoteEvent มีอยู่จริงหรือไม่ และรอให้มันโหลด
+local MELEE_EVENT_NAME = "meleeEvent"
+local event = ReplicatedStorage:WaitForChild(MELEE_EVENT_NAME)
+
+-- กำหนดความถี่ในการตรวจสอบผู้เล่น (เพื่อให้เกิดประสิทธิภาพที่ดีขึ้น)
+-- 0.2 วินาที (5 ครั้งต่อวินาที) ถือว่าค่อนข้างถี่, 0.5 วินาที อาจจะเหมาะสมกว่า
+local CHECK_FREQUENCY = 0.5 
+
+while task.wait(CHECK_FREQUENCY) do
+    
+    -- วนซ้ำผ่านผู้เล่นทุกคนที่อยู่ในเกม
+    for _, targetPlayer in Players:GetPlayers() do
+        
+        -- 1. ตรวจสอบว่าผู้เล่นนั้นไม่ใช่ LocalPlayer
+        if targetPlayer ~= Players.LocalPlayer then
+            
+            -- 2. (เพิ่ม) ตรวจสอบว่าผู้เล่นยังมีตัวละคร (Character) หรือไม่
+            -- การโจมตีหรือตรวจจับระยะมักต้องใช้ Character
+            local targetCharacter = targetPlayer.Character
+            if not targetCharacter or not targetCharacter.Parent then
+                continue -- ข้ามไปผู้เล่นคนถัดไป ถ้าไม่มี Character
+            end
+            
+            -- *** การส่ง Instance ของ Player ไปยัง Server ***
+            -- โค้ดเดิมส่ง Instance ของ Player (targetPlayer) ไป
+            -- Server ควรใช้ข้อมูลที่ส่งมานี้เพื่อตรวจสอบความถูกต้อง
+            
+            -- เนื่องจากเราส่ง Instance ของ Player โดยตรง ซึ่ง Server ก็มีอยู่แล้ว 
+            -- Server มักจะใช้ชื่อผู้เล่นหรือ ID แทน
+            -- แต่ถ้าต้องการให้ Server ใช้ข้อมูลนี้ทันที ให้ FireServer ไปเลย
+            
+            -- ส่ง RemoteEvent ไปยัง Server พร้อมอาร์กิวเมนต์เดียวคือ Instance ของผู้เล่นเป้าหมาย
+            -- *ไม่ต้องใช้ unpack() เพราะส่งตัวแปรเดียว*
+            event:FireServer(targetPlayer)
+            
+            -- ในการใช้งานจริง: คุณควรเพิ่มการตรวจสอบระยะทาง (Distance Check) ที่นี่
+            -- เช่น:
+            -- local localCharacter = Players.LocalPlayer.Character
+            -- if localCharacter and (localCharacter.PrimaryPart.Position - targetCharacter.PrimaryPart.Position).Magnitude < 10 then
+            --     event:FireServer(targetPlayer)
+            -- end
+            
+        end
+    end
+end
