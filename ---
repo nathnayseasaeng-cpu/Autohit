@@ -1,53 +1,96 @@
+--// ===== CONFIG ===== //--
+getgenv().AutoPunch = true        -- เปิด/ปิดตีผู้เล่น
+local RANGE = 50                   -- ระยะชก
+local CHECK_TIME = 0.15           -- เวลาเช็คผู้เล่น
+local ESP_TIME = 0.5              -- เวลาเช็คไอเทม
+
+-- ไอเทมใน Workspace ที่ทำ ESP + สี
+local DROP_ITEMS = {
+    ["M9"] = Color3.fromRGB(0,150,255),        -- สีฟ้า
+    ["KeyCard"] = Color3.fromRGB(255,215,0),   -- สีทอง
+    ["Key card"] = Color3.fromRGB(255,215,0)   -- รองรับชื่อเว้นวรรค
+}
+
+--// ===== SERVICES ===== //--
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RS = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
--- Define the RemoteEvent name and wait for it to load
-local MELEE_EVENT_NAME = "meleeEvent"
-local event = ReplicatedStorage:WaitForChild(MELEE_EVENT_NAME)
+--// ===== REMOTE ===== --
+local event = RS:WaitForChild("meleeEvent")
 
--- Local player references
-local LocalPlayer = Players.LocalPlayer
-local localCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+--// ===== LOCAL PLAYER ===== --
+local LP = Players.LocalPlayer
+local Char = LP.Character or LP.CharacterAdded:Wait()
+LP.CharacterAdded:Connect(function(c)
+    Char = c
+end)
 
--- Set the frequency for checking other players (e.g., 5 times per second)
-local CHECK_FREQUENCY = 0.2 -- Original frequency (Adjust to 0.5 for less server load)
+--// ===== FUNCTIONS ===== --
 
--- Define the maximum distance for the client to consider a target "hittable"
-local MAX_ATTACK_RANGE = 8 
+-- Auto Punch
+task.spawn(function()
+    while task.wait(CHECK_TIME) do
+        if not getgenv().AutoPunch then continue end
+        local HRP = Char and Char:FindFirstChild("HumanoidRootPart")
+        if not HRP then continue end
 
--- Wait for the LocalPlayer's character to be fully ready before starting the loop
-if not localCharacter then
-    localCharacter = LocalPlayer.CharacterAdded:Wait()
-end
-
-while task.wait(CHECK_FREQUENCY) do
-    
-    -- Get the position of the local player's character
-    local localHumanoidRootPart = localCharacter:FindFirstChild("HumanoidRootPart")
-    if not localHumanoidRootPart then continue end -- Skip if character is missing HRP
-
-    -- Iterate through all players in the game
-    for _, targetPlayer in Players:GetPlayers() do
-        
-        -- 1. Ensure the player is not the LocalPlayer
-        if targetPlayer ~= LocalPlayer then
-            
-            local targetCharacter = targetPlayer.Character
-            
-            -- 2. Validate that the target player has a valid Character and HumanoidRootPart
-            local targetHumanoidRootPart = targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart")
-            if not targetHumanoidRootPart then
-                continue -- Skip if target character/HRP is missing
-            end
-            
-            -- 3. Perform a quick distance check on the client-side
-            local distance = (localHumanoidRootPart.Position - targetHumanoidRootPart.Position).Magnitude
-            
-            if distance <= MAX_ATTACK_RANGE then
-                -- 4. Only fire the event if the target is within the specified range
-                -- Send the target Player Instance to the server
-                event:FireServer(targetPlayer)
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LP and plr.Character then
+                local tHRP = plr.Character:FindFirstChild("HumanoidRootPart")
+                local tHum = plr.Character:FindFirstChild("Humanoid")
+                if tHRP and tHum and tHum.Health > 0 then
+                    local dist = (HRP.Position - tHRP.Position).Magnitude
+                    if dist <= RANGE then
+                        pcall(function()
+                            event:FireServer(plr)
+                        end)
+                    end
+                end
             end
         end
     end
+end)
+
+-- ฟังก์ชันสร้าง ESP
+local function addESP(obj, color)
+    if obj:FindFirstChild("ITEM_ESP") then return end
+
+    -- Highlight Box
+    local hl = Instance.new("Highlight")
+    hl.Name = "ITEM_ESP"
+    hl.FillColor = color
+    hl.FillTransparency = 0.7
+    hl.OutlineColor = color
+    hl.Adornee = obj
+    hl.Parent = obj
+
+    -- Name Tag
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "ITEM_ESP"
+    bb.Size = UDim2.new(0, 120, 0, 22)
+    bb.Adornee = obj
+    bb.AlwaysOnTop = true
+    bb.Parent = obj
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = color
+    label.TextStrokeTransparency = 0.4
+    label.Font = Enum.Font.SourceSansBold
+    label.TextScaled = true
+    label.Text = obj.Name
+    label.Parent = bb
 end
+
+-- ตรวจไอเทมดรอปใน Workspace
+task.spawn(function()
+    while task.wait(ESP_TIME) do
+        for _, obj in ipairs(Workspace:GetChildren()) do
+            if DROP_ITEMS[obj.Name] and obj:IsA("Model") then
+                addESP(obj, DROP_ITEMS[obj.Name])
+            end
+        end
+    end
+end)
