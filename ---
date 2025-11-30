@@ -1,20 +1,21 @@
 --// ===== CONFIG ===== //--
 getgenv().AutoPunch = true        -- เปิด/ปิดตีผู้เล่น
 local RANGE = 50                   -- ระยะชก
-local CHECK_TIME = 0.15           -- เวลาเช็คผู้เล่น
-local ESP_TIME = 0.5              -- เวลาเช็คไอเทม
+local CHECK_TIME = 0.1             -- เวลาเช็คผู้เล่น
+local ESP_TIME = 0.5               -- เวลาเช็คไอเทม
 
 -- ไอเทมใน Workspace ที่ทำ ESP + สี
 local DROP_ITEMS = {
-    ["M9"] = Color3.fromRGB(0,150,255),        -- สีฟ้า
-    ["KeyCard"] = Color3.fromRGB(255,215,0),   -- สีทอง
-    ["Key card"] = Color3.fromRGB(255,215,0)   -- รองรับชื่อเว้นวรรค
+    ["M9"] = Color3.fromRGB(0,150,255),        
+    ["KeyCard"] = Color3.fromRGB(255,215,0),   
+    ["Key card"] = Color3.fromRGB(255,215,0)
 }
 
---// ===== SERVICES ===== //--
+--// ===== SERVICES ===== --
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 
 --// ===== REMOTE ===== --
 local event = RS:WaitForChild("meleeEvent")
@@ -22,13 +23,9 @@ local event = RS:WaitForChild("meleeEvent")
 --// ===== LOCAL PLAYER ===== --
 local LP = Players.LocalPlayer
 local Char = LP.Character or LP.CharacterAdded:Wait()
-LP.CharacterAdded:Connect(function(c)
-    Char = c
-end)
+LP.CharacterAdded:Connect(function(c) Char = c end)
 
---// ===== FUNCTIONS ===== --
-
--- Auto Punch
+--// ===== AUTO PUNCH ===== --
 task.spawn(function()
     while task.wait(CHECK_TIME) do
         if not getgenv().AutoPunch then continue end
@@ -52,11 +49,10 @@ task.spawn(function()
     end
 end)
 
--- ฟังก์ชันสร้าง ESP
+--// ===== ITEM ESP ===== --
 local function addESP(obj, color)
     if obj:FindFirstChild("ITEM_ESP") then return end
 
-    -- Highlight Box
     local hl = Instance.new("Highlight")
     hl.Name = "ITEM_ESP"
     hl.FillColor = color
@@ -65,16 +61,15 @@ local function addESP(obj, color)
     hl.Adornee = obj
     hl.Parent = obj
 
-    -- Name Tag
     local bb = Instance.new("BillboardGui")
     bb.Name = "ITEM_ESP"
-    bb.Size = UDim2.new(0, 120, 0, 22)
+    bb.Size = UDim2.new(0,120,0,22)
     bb.Adornee = obj
     bb.AlwaysOnTop = true
     bb.Parent = obj
 
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Size = UDim2.new(1,0,1,0)
     label.BackgroundTransparency = 1
     label.TextColor3 = color
     label.TextStrokeTransparency = 0.4
@@ -84,13 +79,96 @@ local function addESP(obj, color)
     label.Parent = bb
 end
 
--- ตรวจไอเทมดรอปใน Workspace
 task.spawn(function()
     while task.wait(ESP_TIME) do
         for _, obj in ipairs(Workspace:GetChildren()) do
             if DROP_ITEMS[obj.Name] and obj:IsA("Model") then
                 addESP(obj, DROP_ITEMS[obj.Name])
             end
+        end
+    end
+end)
+
+--// ===== PLAYER ESP ===== --
+local Camera = workspace.CurrentCamera
+local playerESP = {}
+
+local function makeESP(plr)
+    local box = Drawing.new("Square")
+    box.Thickness = 2
+    box.Filled = false
+    box.Visible = false
+
+    local nameTag = Drawing.new("Text")
+    nameTag.Size = 16
+    nameTag.Center = true
+    nameTag.Outline = true
+    nameTag.Visible = false
+
+    local hpTag = Drawing.new("Text")
+    hpTag.Size = 14
+    hpTag.Center = true
+    hpTag.Outline = true
+    hpTag.Color = Color3.fromRGB(0,255,0)
+    hpTag.Visible = false
+
+    playerESP[plr] = {Box=box, Name=nameTag, HP=hpTag}
+end
+
+local function removeESP(plr)
+    if playerESP[plr] then
+        for _, v in pairs(playerESP[plr]) do v:Remove() end
+        playerESP[plr] = nil
+    end
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    if plr ~= LP then makeESP(plr) end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    if plr ~= LP then makeESP(plr) end
+end)
+
+Players.PlayerRemoving:Connect(removeESP)
+
+RunService.RenderStepped:Connect(function()
+    for plr, data in pairs(playerESP) do
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if char and hum and hrp and hum.Health > 0 then
+            local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if onScreen then
+                local top,_ = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0,3,0))
+                local bottom,_ = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0,3,0))
+                local height = math.abs(top.Y - bottom.Y)
+                local width = height / 2
+
+                local teamColor = plr.Team and plr.Team.TeamColor.Color or Color3.fromRGB(255,255,255)
+
+                data.Box.Size = Vector2.new(width,height)
+                data.Box.Position = Vector2.new(pos.X - width/2,pos.Y - height/2)
+                data.Box.Color = teamColor
+                data.Box.Visible = true
+
+                data.Name.Text = plr.Name
+                data.Name.Position = Vector2.new(pos.X,pos.Y - height/2 - 15)
+                data.Name.Color = teamColor
+                data.Name.Visible = true
+
+                data.HP.Text = tostring(math.floor(hum.Health))
+                data.HP.Position = Vector2.new(pos.X,pos.Y + height/2 + 5)
+                data.HP.Visible = true
+            else
+                data.Box.Visible = false
+                data.Name.Visible = false
+                data.HP.Visible = false
+            end
+        else
+            data.Box.Visible = false
+            data.Name.Visible = false
+            data.HP.Visible = false
         end
     end
 end)
