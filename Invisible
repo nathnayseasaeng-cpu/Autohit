@@ -1,0 +1,107 @@
+local player = game.Players.LocalPlayer
+local runService = game:GetService("RunService")
+
+if player.PlayerGui:FindFirstChild("WerStableHub") then
+    player.PlayerGui.WerStableHub:Destroy()
+end
+
+local sg = Instance.new("ScreenGui")
+sg.Name = "WerStableHub"
+sg.Parent = player.PlayerGui
+sg.ResetOnSpawn = false
+
+local main = Instance.new("Frame")
+main.Name = "MainFrame"
+main.Parent = sg
+main.Size = UDim2.new(0, 160, 0, 180)
+main.Position = UDim2.new(0.5, -80, 0.4, 0)
+main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+main.BorderSizePixel = 2
+main.BorderColor3 = Color3.fromRGB(0, 170, 255)
+main.Active = true
+main.Draggable = true 
+
+local title = Instance.new("TextLabel")
+title.Parent = main
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+title.Text = "WEIR HUB V3"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 16
+
+local function makeBtn(name, text, pos, color)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Parent = main
+    btn.Size = UDim2.new(0, 140, 0, 40)
+    btn.Position = pos
+    btn.BackgroundColor3 = color
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.SourceSansSemibold
+    btn.TextSize = 14
+    btn.BorderSizePixel = 0
+    return btn
+end
+
+local invisBtn = makeBtn("InvisBtn", "INVISIBLE (OFF)", UDim2.new(0, 10, 0, 45), Color3.fromRGB(60, 60, 60))
+local speedBtn = makeBtn("SpeedBtn", "SPEED (OFF)", UDim2.new(0, 10, 0, 95), Color3.fromRGB(60, 60, 60))
+local jumpBtn = makeBtn("JumpBtn", "JUMP (OFF)", UDim2.new(0, 10, 0, 145), Color3.fromRGB(60, 60, 60))
+jumpBtn.Size = UDim2.new(0, 140, 0, 30) -- ปรับขนาดปุ่มล่างสุดนิดนึง
+
+local invis_on = false
+invisBtn.MouseButton1Click:Connect(function()
+    invis_on = not invis_on
+    local char = player.Character
+    if not char then return end
+    
+    if invis_on then
+        invisBtn.Text = "STATUS: ON"
+        invisBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+        
+        local savedpos = char.HumanoidRootPart.CFrame
+        char:MoveTo(Vector3.new(-25.95, 84, 3537.55))
+        task.wait(00000.1)
+        
+        local Seat = Instance.new('Seat', workspace)
+        Seat.Name = 'WerInvis'
+        Seat.Transparency = 1
+        Seat.CanCollide = false
+        Seat.Position = Vector3.new(-25.95, 84, 3537.55)
+        
+        local Weld = Instance.new("Weld", Seat)
+        Weld.Part0 = Seat
+        Weld.Part1 = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+        
+        task.wait(0.001)
+        Seat.CFrame = savedpos
+    else
+        invisBtn.Text = "INVISIBLE (OFF)"
+        invisBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        local s = workspace:FindFirstChild('WerInvis')
+        if s then s:Destroy() end
+    end
+end)
+
+local speed_on = false
+speedBtn.MouseButton1Click:Connect(function()
+    speed_on = not speed_on
+    local hum = player.Character:FindFirstChild("Humanoid")
+    if hum then
+        hum.WalkSpeed = speed_on and 100 or 16
+        speedBtn.Text = speed_on and "SPEED: ON" or "SPEED: OFF"
+        speedBtn.BackgroundColor3 = speed_on and Color3.fromRGB(0, 180, 100) or Color3.fromRGB(60, 60, 60)
+    end
+end)
+
+local jump_on = false
+jumpBtn.MouseButton1Click:Connect(function()
+    jump_on = not jump_on
+    local hum = player.Character:FindFirstChild("Humanoid")
+    if hum then
+        hum.JumpPower = jump_on and 100 or 50
+        hum.UseJumpPower = true
+        jumpBtn.Text = jump_on and "JUMP: ON" or "JUMP: OFF"
+    end
+end)
