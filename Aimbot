@@ -1,0 +1,114 @@
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+local Config = {
+    Target = nil,
+    Locked = false,
+    TeamCheck = true,
+    IsMinimized = false
+}
+
+local SG = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local MainFrame = Instance.new("Frame", SG)
+MainFrame.Position = UDim2.new(0, 100, 0, 20)
+MainFrame.Size = UDim2.new(0, 130, 0, 100)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 2
+MainFrame.ClipsDescendants = true 
+
+local ShutterBtn = Instance.new("TextButton", MainFrame)
+ShutterBtn.Size = UDim2.new(0, 25, 0, 25)
+ShutterBtn.Position = UDim2.new(1, -25, 0, 0)
+ShutterBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ShutterBtn.Text = "▲"
+ShutterBtn.TextColor3 = Color3.new(1, 1, 1)
+
+local LockBtn = Instance.new("TextButton", MainFrame)
+LockBtn.Size = UDim2.new(1, -10, 0, 35)
+LockBtn.Position = UDim2.new(0, 5, 0, 35)
+LockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+LockBtn.Text = "56-LOCK: OFF"
+LockBtn.TextColor3 = Color3.new(1, 1, 1)
+LockBtn.Font = Enum.Font.SourceSansBold
+
+local TeamBtn = Instance.new("TextButton", MainFrame)
+TeamBtn.Size = UDim2.new(1, -10, 0, 25)
+TeamBtn.Position = UDim2.new(0, 5, 0, 75)
+TeamBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+TeamBtn.Text = "TEAM: OFF"
+TeamBtn.TextColor3 = Color3.new(1, 1, 1)
+TeamBtn.TextSize = 12
+
+ShutterBtn.MouseButton1Click:Connect(function()
+    Config.IsMinimized = not Config.IsMinimized
+    if Config.IsMinimized then
+        MainFrame:TweenSize(UDim2.new(0, 130, 0, 25), "Out", "Quart", 0.3, true)
+        ShutterBtn.Text = "▼"
+    else
+        MainFrame:TweenSize(UDim2.new(0, 130, 0, 100), "Out", "Quart", 0.3, true)
+        ShutterBtn.Text = "▲"
+    end
+end)
+
+local function ShouldTarget(plr)
+    if not plr or plr == LP or not plr.Character or not plr.Character:FindFirstChild("Head") or plr.Character.Humanoid.Health <= 0 then return false end
+    if Config.TeamCheck and plr.Team == LP.Team then return false end
+    return true
+end
+
+TeamBtn.MouseButton1Click:Connect(function()
+    Config.TeamCheck = not Config.TeamCheck
+    TeamBtn.Text = Config.TeamCheck and "TEAM: OFF" or "TEAM: ON"
+    TeamBtn.BackgroundColor3 = Config.TeamCheck and Color3.fromRGB(120, 0, 0) or Color3.fromRGB(0, 120, 0)
+end)
+
+LockBtn.MouseButton1Click:Connect(function()
+    Config.Locked = not Config.Locked
+    if Config.Locked then
+        local closest, dist = nil, math.huge -- ตั้งค่าเป็น Infinity (ไม่จำกัดระยะ)
+        for _, v in pairs(Players:GetPlayers()) do
+            if ShouldTarget(v) then
+                local d = (v.Character.Head.Position - LP.Character.Head.Position).Magnitude
+                if d < dist then dist = d; closest = v end
+            end
+        end
+        Config.Target = closest
+        if Config.Target then 
+            LockBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+            LockBtn.Text = "LOCKED: "..string.sub(Config.Target.Name,1,5)
+        else Config.Locked = false end
+    else
+        Config.Target = nil; LockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); LockBtn.Text = "56-LOCK: OFF"
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if Config.Locked and Config.Target and ShouldTarget(Config.Target) then
+        Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, Config.Target.Character.Head.Position)
+    elseif Config.Locked then
+        Config.Locked = false; Config.Target = nil
+        LockBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); LockBtn.Text = "56-LOCK: OFF"
+    end
+end)
+
+local function CreateESP(plr)
+    if plr == LP then return end
+    local Circle = Drawing.new("Circle")
+    Circle.Visible = false; Circle.Thickness = 2; Circle.Filled = false
+    RunService.RenderStepped:Connect(function()
+        if plr.Character and plr.Character:FindFirstChild("Head") and plr.Character.Humanoid.Health > 0 then
+            if Config.TeamCheck and plr.Team == LP.Team then Circle.Visible = false return end
+            local pos, onscreen = Camera:WorldToViewportPoint(plr.Character.Head.Position)
+            if onscreen then
+                Circle.Position = Vector2.new(pos.X, pos.Y)
+                Circle.Visible = true
+                Circle.Color = Color3.fromHSV((plr.Character.Humanoid.Health/plr.Character.Humanoid.MaxHealth)*0.33, 1, 1)
+                Circle.Radius = (1500 / pos.Z)
+            else Circle.Visible = false end
+        else Circle.Visible = false end
+    end)
+end
+for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
+Players.PlayerAdded:Connect(CreateESP)
