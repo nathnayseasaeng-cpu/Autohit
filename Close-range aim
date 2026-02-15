@@ -1,0 +1,194 @@
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+
+local GuiName = "เทส🥀"
+if CoreGui:FindFirstChild(GuiName) then CoreGui[GuiName]:Destroy() end
+for _, v in pairs(CoreGui:GetChildren()) do
+    if v.Name:match("Wer") then v:Destroy() end
+end
+
+local Config = {
+    Locked = false,
+    Footwork = false,
+    TeamCheck = true,
+    CurrentTarget = nil,
+    
+    AttackRange = 3.8,   
+    BackstepRange = 3.0, 
+    
+    WallDist = 3,
+    JumpDist = 4
+}
+
+local SG = Instance.new("ScreenGui", CoreGui); SG.Name = GuiName
+local Main = Instance.new("Frame", SG)
+Main.Size = UDim2.new(0, 150, 0, 180); Main.Position = UDim2.new(0, 80, 0, 150)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 18); Main.Active = true; Main.Draggable = true
+Instance.new("UICorner", Main, UDim.new(0, 8))
+Instance.new("UIStroke", Main).Color = Color3.fromRGB(255, 200, 0) 
+
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 30); Title.Text = "aim fuck"; Title.TextColor3 = Color3.fromRGB(255, 200, 0); Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+
+local Container = Instance.new("Frame", Main)
+Container.Size = UDim2.new(1, 0, 1, -30); Container.Position = UDim2.new(0, 0, 0, 30); Container.BackgroundTransparency = 1
+
+local function CreateBtn(text, pos, color)
+    local b = Instance.new("TextButton", Container); b.Size = UDim2.new(0.9, 0, 0, 35); b.Position = pos
+    b.Text = text; b.BackgroundColor3 = color; b.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", b, UDim.new(0, 6))
+    return b
+end
+
+local LBtn = CreateBtn("AIM: OFF", UDim2.new(0.05, 0, 0, 5), Color3.fromRGB(50, 50, 60))
+local FBtn = CreateBtn("AUTO: OFF", UDim2.new(0.05, 0, 0, 50), Color3.fromRGB(50, 50, 60))
+local TBtn = CreateBtn("TEAM: ON", UDim2.new(0.05, 0, 0, 95), Color3.fromRGB(0, 100, 50))
+
+local function EnableNoclip()
+    if LP.Character then
+        for _, v in pairs(LP.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end
+
+
+local function UpdateESP(plr)
+    if plr == LP then return end
+    local function Add()
+        if plr.Character then
+            local hl = Instance.new("Highlight", plr.Character); hl.Name = "WerESP"
+            hl.FillTransparency = 0.5; hl.OutlineColor = Color3.new(1,1,1)
+            RunService.RenderStepped:Connect(function()
+                if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+                    hl.Enabled = not (Config.TeamCheck and plr.Team == LP.Team)
+                    
+                    hl.FillColor = (plr == Config.CurrentTarget) and Color3.new(1,0,0) or Color3.new(0,0,0)
+                    hl.OutlineColor = (plr == Config.CurrentTarget) and Color3.new(1,1,0) or Color3.new(1,1,1)
+                end
+            end)
+        end
+    end
+    plr.CharacterAdded:Connect(Add); Add()
+end
+
+local function GetBestTarget()
+    local target, dist = nil, 200
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LP and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character.Humanoid.Health > 0 then
+            if Config.TeamCheck and (v.Team == LP.Team) then continue end
+            local d = (v.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then dist = d; target = v end
+        end
+    end
+    return target
+end
+
+
+local LastHealth = 100
+RunService.RenderStepped:Connect(function()
+    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+        local myHum = LP.Character.Humanoid
+        if myHum.Health < LastHealth then
+            
+            local attacker, d = nil, 15 
+            for _, v in pairs(Players:GetPlayers()) do
+                if v ~= LP and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                    if Config.TeamCheck and v.Team == LP.Team then continue end
+                    local dist = (v.Character.HumanoidRootPart.Position - LP.Character.HumanoidRootPart.Position).Magnitude
+                    if dist < d then d = dist; attacker = v end
+                end
+            end
+            if attacker then Config.CurrentTarget = attacker end 
+        end
+        LastHealth = myHum.Health
+    end
+    
+    if Config.CurrentTarget and (not Config.CurrentTarget.Character or Config.CurrentTarget.Character.Humanoid.Health <= 0) then
+        Config.CurrentTarget = GetBestTarget()
+    end
+    
+    if not Config.CurrentTarget then
+        Config.CurrentTarget = GetBestTarget()
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    local target = Config.CurrentTarget
+    if target and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+        local myRoot = LP.Character.HumanoidRootPart
+        local tRoot = target.Character.HumanoidRootPart
+        local hum = LP.Character.Humanoid
+        local dist = (tRoot.Position - myRoot.Position).Magnitude
+        
+        
+        if Config.Locked then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, tRoot.Position), 0.2)
+        end
+        
+        
+        if Config.Footwork then
+            local moveDir = Vector3.new(0,0,0)
+            
+            
+            local backRay = Ray.new(myRoot.Position, -myRoot.CFrame.LookVector * Config.WallDist)
+            local hitWall, _ = workspace:FindPartOnRay(backRay, LP.Character)
+            
+            
+            if hitWall and dist < 5 then
+                EnableNoclip()
+                moveDir = (tRoot.Position - myRoot.Position).Unit 
+            
+           
+            else
+                if dist > Config.AttackRange then
+                    
+                    moveDir = (tRoot.Position - myRoot.Position).Unit
+                elseif dist < Config.BackstepRange then
+                    
+                    
+                    local backDir = (myRoot.Position - tRoot.Position).Unit 
+                    local sideDir = myRoot.CFrame.RightVector 
+                    moveDir = (backDir + (sideDir * 0.5)).Unit 
+                else
+                    
+                    
+                    local enemyVel = tRoot.Velocity
+                    local relativeVel = tRoot.CFrame:VectorToObjectSpace(enemyVel)
+                    
+                    if relativeVel.X > 0.1 then
+                        moveDir = -myRoot.CFrame.RightVector 
+                    else
+                        moveDir = myRoot.CFrame.RightVector 
+                    end
+                end
+            end
+            
+  
+            local fwdRay = Ray.new(myRoot.Position, myRoot.CFrame.LookVector * Config.JumpDist)
+            local hitPart, _ = workspace:FindPartOnRay(fwdRay, LP.Character)
+            if hitPart and not hitPart:IsDescendantOf(target.Character) and dist > 4 then
+                hum.Jump = true
+            end
+            
+            hum:Move(moveDir, false)
+            
+            
+            if math.abs(tRoot.Position.Y - myRoot.Position.Y) < 5 then
+                myRoot.CFrame = CFrame.new(myRoot.Position, Vector3.new(tRoot.Position.X, myRoot.Position.Y, tRoot.Position.Z))
+            end
+        end
+    end
+end)
+
+
+LBtn.MouseButton1Click:Connect(function() Config.Locked = not Config.Locked; LBtn.Text = Config.Locked and "AIM: ON" or "AIM: OFF" end)
+FBtn.MouseButton1Click:Connect(function() Config.Footwork = not Config.Footwork; FBtn.Text = Config.Footwork and "AUTO: ON" or "AUTO: OFF" end)
+TBtn.MouseButton1Click:Connect(function() Config.TeamCheck = not Config.TeamCheck; TBtn.Text = Config.TeamCheck and "TEAM: ON" or "TEAM: OFF"; Config.CurrentTarget = nil end)
+
+for _, p in pairs(Players:GetPlayers()) do UpdateESP(p) end
+Players.PlayerAdded:Connect(UpdateESP)
