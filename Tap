@@ -1,0 +1,67 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+local old = player.PlayerGui:FindFirstChild("WerPureTapGui")
+if old then old:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui", player.PlayerGui)
+ScreenGui.Name = "WerPureTapGui"
+ScreenGui.ResetOnSpawn = false 
+
+local TapButton = Instance.new("TextButton", ScreenGui)
+TapButton.Size = UDim2.new(0, 140, 0, 60)
+TapButton.Position = UDim2.new(0, 20, 0, 20) 
+TapButton.Text = "TAP"
+TapButton.BackgroundColor3 = Color3.fromRGB(20, 2, 2)
+TapButton.TextColor3 = Color3.new(1, 0, 0)
+TapButton.Font = Enum.Font.GothamBlack
+TapButton.TextSize = 20
+Instance.new("UICorner", TapButton)
+local Stroke = Instance.new("UIStroke", TapButton)
+Stroke.Color = Color3.new(1, 0, 0)
+Stroke.Thickness = 2
+
+local Tapping = false
+local Connection
+
+local function startTurning()
+    if Connection then Connection:Disconnect() end
+    Connection = RunService.RenderStepped:Connect(function()
+        local char = player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if root and Tapping then
+            local lookAt = camera.CFrame.LookVector
+            root.CFrame = CFrame.new(root.Position, root.Position + Vector3.new(lookAt.X, 0, lookAt.Z))
+        end
+    end)
+end
+
+TapButton.MouseButton1Down:Connect(function()
+    local char = player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
+    if root and hum then
+        Tapping = true
+        TapButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        TapButton.TextColor3 = Color3.new(1, 1, 1)
+        root.Anchored = true
+        hum.PlatformStand = true
+        startTurning()
+    end
+end)
+
+TapButton.MouseButton1Up:Connect(function()
+    Tapping = false
+    if Connection then Connection:Disconnect() end
+    local char = player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
+    if root and hum then
+        root.Anchored = false
+        hum.PlatformStand = false
+        TapButton.BackgroundColor3 = Color3.fromRGB(20, 2, 2)
+        TapButton.TextColor3 = Color3.new(1, 0, 0)
+    end
+end)
