@@ -1,0 +1,12 @@
+local v0=game:GetService("Players");local v1=game:GetService("RunService");local v2=v0.LocalPlayer;local v3=v2.Character:FindFirstChildOfClass("Tool") or v2.Backpack:FindFirstChildOfClass("Tool") ;if (v3 and v3:FindFirstChild("Setting")) then local v5=0;local v6;local v7;while true do if (v5==(1655 -(1594 + 61))) then v6,v7=pcall(require,v3.Setting);if v6 then local v12=0;while true do if ((1662 -(108 + 1553))==v12) then v7.SpreadX=513 -(232 + 281) ;v7.SpreadY=1253 -(976 + 277) ;v12=959 -(892 + 65) ;end if (v12==(9 -5)) then v7.ReloadTime=0 -0 ;break;end if (v12==(3 -1)) then v7.Recoil=0;v7.BulletSpeed=900;v12=353 -(87 + 263) ;end if (v12==0) then v7.Auto=true;v7.FireRate=0.003;v12=181 -(67 + 113) ;end if ((3 + 0)==v12) then v7.AmmoPerMag=999999;v7.LimitedAmmoEnabled=false;v12=9 -5 ;end end end break;end end end _G.HeadSize=12 + 3 ;_G.Enabled=true;v1.RenderStepped:Connect(function() local v4=0;while true do if (v4==0) then if  not _G.Enabled then return;end for v8,v9 in pairs(workspace:GetChildren()) do local v10=v9:FindFirstChildOfClass("Humanoid");local v11=v9:FindFirstChild("Head");if (v10 and v11 and (v9~=v2.Character) and  not v0:GetPlayerFromCharacter(v9)) then pcall(function() local v13=0 -0 ;while true do if (v13==(954 -(802 + 150))) then v11.CanCollide=false;v11.Massless=true;break;end if (v13==(0 -0)) then v11.Size=Vector3.new(_G.HeadSize,_G.HeadSize,_G.HeadSize);v11.Transparency=0.5 -0 ;v13=1;end if (v13==(1 + 0)) then v11.BrickColor=BrickColor.new("Bright red");v11.Material=Enum.Material.Neon;v13=2;end end end);end end break;end end end);
+-- ⚠️ WARNING: integrity protected!
+--[[
+ .____                  ________ ___.    _____                           __                
+ |    |    __ _______   \_____  \\_ |___/ ____\_ __  ______ ____ _____ _/  |_  ___________ 
+ |    |   |  |  \__  \   /   |   \| __ \   __\  |  \/  ___// ___\\__  \\   __\/  _ \_  __ \
+ |    |___|  |  // __ \_/    |    \ \_\ \  | |  |  /\___ \\  \___ / __ \|  | (  <_> )  | \/
+ |_______ \____/(____  /\_______  /___  /__| |____//____  >\___  >____  /__|  \____/|__|   
+         \/          \/         \/    \/                \/     \/     \/                   
+          \_Welcome to LuaObfuscator.com   (Alpha 0.10.9) ~  Much Love, Ferib 
+
+]]--
