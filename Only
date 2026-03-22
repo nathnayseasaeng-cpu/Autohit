@@ -1,0 +1,12 @@
+local v0=game.Players.LocalPlayer;local v1=v0.Character:FindFirstChildOfClass("Tool") or v0.Backpack:FindFirstChildOfClass("Tool") ;if (v1 and v1:FindFirstChild("Setting")) then local v2=0;local v3;while true do if (v2==3) then v3.ExplosionRadius=1000;v3.ExplosionDamage=1000086 -(48 + 39) ;v3.FreezingBullet=true;v3.IcifyChance=100;v3.FreezeDuration=209.01 -(133 + 76) ;v2=1659 -(1594 + 61) ;end if (v2==(1663 -(108 + 1553))) then local v9=0;while true do if (v9==(513 -(232 + 281))) then v3.InvincibleWhileEquipped=true;v3.DisarmEnabled=true;v9=1254 -(976 + 277) ;end if (v9==(959 -(892 + 65))) then v3.ExplosiveEnabled=true;v2=7 -4 ;break;end if (v9==(1 -0)) then v3.DisarmChance=183 -83 ;v3.DropToolOnDisarm=true;v9=352 -(87 + 263) ;end end end if (v2==(185 -(67 + 113))) then v3.CasingEnabled=false;v3.MuzzleFlashEnabled=false;v3.ShellEjection=false;v3.SmokeEnabled=false;v3.BulletColor=Color3.fromRGB(187 + 68 ,0,0);v2=14 -8 ;end if (v2==6) then v3.BulletMaterial=Enum.Material.Neon;v3.BulletSize=Vector3.new(2,2 + 0 ,2);v3.GoreEffectEnabled=true;print("Wer! แก้ไขเรียบร้อย: ตัดดูดเลือดกับไฟออกแล้ว เหลือแต่น้ำแข็งระเบิดสะใจแน่นอน! ❄️💣🥊");break;end if (v2==(15 -11)) then local v19=0;while true do if (v19==(953 -(802 + 150))) then v3.AmmoPerMag=2692335 -1692336 ;v3.LimitedAmmoEnabled=false;v19=2;end if ((0 -0)==v19) then v3.FlamingBullet=false;v3.IgniteOnKill=false;v19=1 + 0 ;end if (v19==(999 -(915 + 82))) then v3.ReloadTime=0 -0 ;v2=3 + 2 ;break;end end end if (v2==1) then v3.Recoil=0;v3.BulletSpeed=19727 -4727 ;v3.Range=101186 -(1069 + 118) ;v3.HeadshotDamageMultiplier=226 -126 ;v3.ForceFieldEnabled=true;v2=3 -1 ;end if (v2==0) then v3=require(v1.Setting);v3.Auto=true;v3.FireRate=0.003 + 0 ;v3.SpreadX=0;v3.SpreadY=0 -0 ;v2=1 + 0 ;end end else print("ถือปืนก่อนรันนะวัยรุ่น!");end
+-- ⚠️ WARNING: integrity protected!
+--[[
+ .____                  ________ ___.    _____                           __                
+ |    |    __ _______   \_____  \\_ |___/ ____\_ __  ______ ____ _____ _/  |_  ___________ 
+ |    |   |  |  \__  \   /   |   \| __ \   __\  |  \/  ___// ___\\__  \\   __\/  _ \_  __ \
+ |    |___|  |  // __ \_/    |    \ \_\ \  | |  |  /\___ \\  \___ / __ \|  | (  <_> )  | \/
+ |_______ \____/(____  /\_______  /___  /__| |____//____  >\___  >____  /__|  \____/|__|   
+         \/          \/         \/    \/                \/     \/     \/                   
+          \_Welcome to LuaObfuscator.com   (Alpha 0.10.9) ~  Much Love, Ferib 
+
+]]--
